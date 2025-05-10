@@ -8,6 +8,7 @@ from textblob import TextBlob
 from sklearn.feature_extraction.text import TfidfVectorizer
 import string
 import os
+from urllib.parse import urlparse, urlunparse
 
 # Sentiment analysis thresholds
 SENTIMENT_THRESHOLDS = {
@@ -20,19 +21,17 @@ SENTIMENT_THRESHOLDS = {
 TECH_CATEGORIES = {
     'display_quality': ['OLED', 'QD-OLED', 'HDR', 'SDR', 'color', 'brightness', 'contrast', 
                        'resolution', 'panel', 'calibration', 'RGB'],
-    'performance': ['response time', 'refresh rate', 'latency', 'fps', 'gaming', 'lag', 
+    'performance': ['response time', 'refresh rate', 'latency', 'fps', 'lag', 
                    'ghosting', 'tearing'],
     'connectivity': ['USB', 'HDMI', 'DisplayPort', 'DP', 'KVM', 'USB-C', 'port', 'input'],
-    'design': ['ergonomic', 'stand', 'build quality', 'design', 'cooling', 'workmanship', 'height', 'width', 'depth', 'weight'],
-    'features': ['G-Sync', 'FreeSync', 'HDR', 'PiP', 'PbP', 'OSD'],
-    'price': ['budget', 'affordable', 'expensive', 'cost-effective', 'value', 'cost'],
-    'sound': ['sound', 'audio', 'speaker', 'subwoofer', 'bass', 'treble', 'volume', 'noise', 'noise cancellation'],
-    'camera': ['camera', 'video', 'photo', 'quality', 'resolution', 'zoom', 'focus', 'exposure'],
-    'battery': ['battery', 'life', 'charging', 'wireless', 'usb-c', 'usb-pd', 'power delivery'],
+    'design': ['sound', 'ergonomic', 'stand', 'build quality', 'design', 'cooling', 'workmanship', 'height', 'width', 'depth', 'weight', 'appearance', 'size'],
+    'features': ['G-Sync', 'FreeSync', 'HDR', 'PiP', 'PbP', 'OSD', 'menu', 'sound', 'camera', 'speaker', 'noise','volume', 'noise cancellation'],
+    'price': ['budget', 'affordable', 'expensive', 'cost-effective', 'value', 'cost', 'price', 'cost-saving'],
+    'energy_efficiency': ['battery', 'energy-efficient', 'energy-saving', 'energy-saving mode', 'energy-saving features', 'energy-saving mode', 'energy-saving features'],
 }
 
 def check_requirements():
-    """Check if all required packages are installed"""
+    """Check if all required packages are instaÍ›lled"""
     try:
         import pandas
         import nltk
@@ -148,6 +147,32 @@ def classify_technical_terms(text_list):
     
     return all_categories
 
+def format_url(url):
+    """Format and validate URL"""
+    if pd.isna(url):
+        return ""
+    
+    url = str(url).strip()
+    
+    # Add https:// if no scheme is present
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+    
+    try:
+        # Parse and reconstruct URL to ensure proper formatting
+        parsed = urlparse(url)
+        formatted_url = urlunparse((
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            parsed.query,
+            parsed.fragment
+        ))
+        return formatted_url
+    except:
+        return url  # Return original URL if parsing fails
+
 def process_reviews():
     try:
         # Check if required packages are installed
@@ -170,6 +195,10 @@ def process_reviews():
         print("Reading Excel file...")
         df = pd.read_excel(input_file)
         print(f"Successfully read {len(df)} rows from {input_file}")
+        
+        # Format URLs
+        print("Formatting URLs...")
+        df['link'] = df['link'].apply(format_url)
         
         # Clean and process pros and cons
         print("Processing pros and cons...")
@@ -207,7 +236,7 @@ def process_reviews():
         
         # Select and reorder columns for output
         output_columns = [
-            'model', 'brand', 'segmentation', 'country',
+            'model', 'brand', 'segmentation', 'country', 'reviewer', 'agency', 'link',
             'pros_cleaned', 'cons_cleaned', 'cleaned_text',
             'sentiment_score', 'sentiment_label', 'top_keywords'
         ]

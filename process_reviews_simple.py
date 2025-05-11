@@ -196,6 +196,15 @@ def process_reviews():
         df = pd.read_excel(input_file)
         print(f"Successfully read {len(df)} rows from {input_file}")
         
+        # Convert segmentation and model to uppercase
+        print("Converting segmentation and model to uppercase...")
+        df['segmentation'] = df['segmentation'].str.upper()
+        df['model'] = df['model'].str.upper()
+        
+        # Add model_id column with unique series numbers
+        print("Adding model_id column...")
+        df.insert(0, 'model_id', range(1, len(df) + 1))
+        
         # Format URLs
         print("Formatting URLs...")
         df['link'] = df['link'].apply(format_url)
@@ -236,7 +245,7 @@ def process_reviews():
         
         # Select and reorder columns for output
         output_columns = [
-            'model', 'brand', 'segmentation', 'country', 'reviewer', 'agency', 'link',
+            'model_id', 'model', 'brand', 'segmentation', 'country', 'reviewer', 'agency', 'link',
             'pros_cleaned', 'cons_cleaned', 'cleaned_text',
             'sentiment_score', 'sentiment_label', 'top_keywords'
         ]

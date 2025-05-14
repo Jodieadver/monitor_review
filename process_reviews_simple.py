@@ -196,8 +196,9 @@ def process_reviews():
         df = pd.read_excel(input_file)
         print(f"Successfully read {len(df)} rows from {input_file}")
         
-        # Convert segmentation and model to uppercase
-        print("Converting segmentation and model to uppercase...")
+        # Clean model column and convert segmentation and model to uppercase
+        print("Cleaning model column and converting to uppercase...")
+        df['model'] = df['model'].str.strip()
         df['segmentation'] = df['segmentation'].str.upper()
         df['model'] = df['model'].str.upper()
         
@@ -256,6 +257,17 @@ def process_reviews():
         
         # Create output DataFrame
         output_df = df[output_columns].copy()
+        
+        # Fill empty columns with empty lists
+        print("Filling empty columns with empty lists...")
+        for col in output_columns:
+            if output_df[col].isna().any():
+                if col in ['pros_cleaned', 'cons_cleaned', 'top_keywords'] or col.startswith(('pros_', 'cons_')):
+                    # For list-type columns, use lambda to replace NaN with empty list
+                    output_df[col] = output_df[col].apply(lambda x: [] if pd.isna(x) else x)
+                else:
+                    # For other columns, use regular fillna
+                    output_df[col] = output_df[col].fillna('')
         
         # Save to Excel
         output_file = 'processed_reviews.xlsx'
